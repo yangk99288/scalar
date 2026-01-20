@@ -1,442 +1,116 @@
 openapi: 3.1.1
 info:
-  title: Scalar Galaxy
+  title: WeryAI Generation API
   description: |
-    The Scalar Galaxy is an example OpenAPI document to test OpenAPI tools and libraries. It's a fictional universe with fictional planets and fictional data. Get all the data for [all planets](#tag/planets/get/planets).
+    WeryAI 开放 API，提供 AI 图片和视频生成能力。通过简单的 API 调用，即可实现文生图、图生图、文生视频、图生视频等多种 AI 创作功能。
 
     ## Resources
 
-    * https://github.com/scalar/scalar
-    * https://github.com/OAI/OpenAPI-Specification
-    * https://scalar.com
+    * https://weryai.com
+    * https://weryai.com/settings/api-keys
 
     ## Markdown Support
 
-    All descriptions *can* contain ~~tons of text~~ **Markdown**. [If GitHub supports the syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax), chances are we're supporting it, too. You can even create [internal links to reference endpoints](#tag/authentication/post/user/signup).
+    All descriptions *can* contain ~~tons of text~~ **Markdown**. [If GitHub supports the syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax), chances are we're supporting it, too.
 
     <details>
-      <summary>Examples</summary>
+      <summary>认证方式</summary>
 
-      **Blockquotes**
+      所有 API 请求需要在 Header 中携带 API Key：
 
-      > I love OpenAPI. <3
-
-      **Tables**
-
-      | Feature          | Availability |
-      | ---------------- | ------------ |
-      | Markdown Support | ✓            |
-
-      **Accordion**
-
-      ```html
-      <details>
-        <summary>Using Details Tags</summary>
-        <p>HTML Example</p>
-      </details>
+      ```
+      Authorization: Bearer YOUR_API_KEY
       ```
 
-      **Images**
-
-      Yes, there's support for images, too!
-
-      ![Empty placeholder image showing the width/height](https://images.placeholders.dev/?width=1280&height=720)
-
-      **Alerts**
-
-      > [!tip]
-      > You can now use markdown alerts in your descriptions.
+      您可以在 [WeryAI 控制台](https://weryai.com/settings/api-keys) 获取您的 API Key。
 
     </details>
-  version: 0.5.7
+
+    <details>
+      <summary>任务状态说明</summary>
+
+      生成任务为**异步处理**，提交后返回 `task_id`，可通过查询接口获取任务状态和结果。
+
+      | 状态 | 说明 |
+      | --- | --- |
+      | `PENDING` | 等待处理 |
+      | `PROCESSING` | 处理中 |
+      | `SUCCESS` | 成功 |
+      | `FAILED` | 失败 |
+
+    </details>
+
+    <details>
+      <summary>Webhook 回调</summary>
+
+      如果提供了 `webhook_url`，任务完成后会向该地址发送 POST 请求，包含任务结果。
+
+      > [!tip]
+      > 推荐使用 Webhook 回调方式获取结果，避免频繁轮询。
+
+    </details>
+
+  version: 1.0.0
   contact:
-    name: Scalar Support
-    url: https://scalar.com
-    email: marc@scalar.com
+    name: WeryAI Support
+    url: https://weryai.com
+    email: support@weryai.com
   license:
-    name: MIT
-    url: https://opensource.org/license/MIT
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
 externalDocs:
-  description: Documentation
-  url: https://github.com/scalar/scalar
+  description: WeryAI 官方文档
+  url: https://weryai.com/docs
 servers:
-  - url: https://galaxy.scalar.com
-  - url: '{protocol}://void.scalar.com/{path}'
-    description: Responds with your request data
-    variables:
-      protocol:
-        enum:
-          - https
-        default: https
-      path:
-        default: ''
+  - url: https://api.weryai.com
+    description: Production Server
 security:
   - bearerAuth: []
-  - basicAuth: []
-  - apiKeyQuery: []
-  - apiKeyHeader: []
-  - apiKeyCookie: []
-  - oAuth2: []
-  - openIdConnect: []
 tags:
-  - name: Authentication
+  - name: Image Generation
     description:
-      Some endpoints are public, but some require authentication. We provide
-      all the required endpoints to create an account and authorize yourself.
-  - name: Planets
-    description: Everything about planets
-  - name: Celestial Bodies
-    description: Celestial bodies are the planets and satellites in the Scalar Galaxy.
+      图片生成相关接口，支持文生图和图生图两种模式。文生图根据文本提示词生成图片，图生图根据参考图片和文本提示词生成新图片。
+  - name: Video Generation
+    description:
+      视频生成相关接口，支持文生视频、图生视频和多图生视频三种模式。
+  - name: Task Query
+    description:
+      任务查询相关接口，用于查询任务状态和获取生成结果。建议轮询间隔不小于 3 秒。
 paths:
-  '/planets':
-    get:
-      tags:
-        - Planets
-      summary: Get all planets
-      description: It's easy to say you know them all, but do you really? Retrieve all the planets and check whether you missed one.
-      operationId: getAllData
-      security:
-        - {}
-      parameters:
-        - $ref: '#/components/parameters/limit'
-        - $ref: '#/components/parameters/offset'
-      responses:
-        '200':
-          description: OK
-          headers:
-            X-Request-ID:
-              $ref: '#/components/headers/X-Request-ID'
-            X-Pagination-Total:
-              $ref: '#/components/headers/X-Pagination-Total'
-            X-Pagination-Page:
-              $ref: '#/components/headers/X-Pagination-Page'
-            X-Pagination-Per-Page:
-              $ref: '#/components/headers/X-Pagination-Per-Page'
-            X-Cache-Control:
-              $ref: '#/components/headers/X-Cache-Control'
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Planet'
-                  - $ref: '#/components/schemas/PaginatedResource'
-            application/xml:
-              schema:
-                allOf:
-                  - type: object
-                    xml:
-                      name: planets
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Planet'
-                  - $ref: '#/components/schemas/PaginatedResource'
+  '/v1/generation/text-to-image':
     post:
       tags:
-        - Planets
-      summary: Create a planet
-      description: Time to play god and create a new planet. What do you think? Ah, don't think too much. What could go wrong anyway?
-      operationId: createPlanet
-      callbacks:
-        planetCreated:
-          '{$request.body#/successCallbackUrl}':
-            post:
-              requestBody:
-                description: Information about the newly created planet
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/Planet'
-              responses:
-                '200':
-                  description: Your server returns this code if it accepts the callback
-                '204':
-                  description: Your server should return this HTTP status code if no longer interested in further updates
-          '{$request.body#/failureCallbackUrl}':
-            post:
-              requestBody:
-                description: Information about which fields failed to validate
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/Planet'
-              responses:
-                '200':
-                  description: Your server returns this code if it accepts the callback
-        planetExploded:
-          '{$request.body#/successCallbackUrl}':
-            post:
-              requestBody:
-                description: Information about the newly exploded planet
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/Planet'
-              responses:
-                '200':
-                  description: Your server returns this code if it accepts the callback
+        - Image Generation
+      summary: 提交文生图任务
+      description: 根据文本提示词生成图片，支持多种模型和参数配置。
+      operationId: submitTextToImage
       requestBody:
-        description: Planet
+        description: 文生图任务参数
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Planet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Planet'
-      responses:
-        '201':
-          description: Created
-          headers:
-            X-Request-ID:
-              $ref: '#/components/headers/X-Request-ID'
-            Location:
-              $ref: '#/components/headers/Location'
-            X-Processing-Time:
-              $ref: '#/components/headers/X-Processing-Time'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Planet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Planet'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  '/planets/{planetId}':
-    get:
-      tags:
-        - Planets
-      summary: Get a planet
-      description: You'll better learn a little bit more about the planets. It might come in handy once space travel is available for everyone.
-      operationId: getPlanet
-      security:
-        - {}
-      parameters:
-        - $ref: '#/components/parameters/planetId'
-      responses:
-        '200':
-          description: Planet Found
-          headers:
-            X-Request-ID:
-              $ref: '#/components/headers/X-Request-ID'
-            ETag:
-              $ref: '#/components/headers/ETag'
-            Last-Modified:
-              $ref: '#/components/headers/Last-Modified'
-            X-Cache-Control:
-              $ref: '#/components/headers/X-Cache-Control'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Planet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Planet'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      tags:
-        - Planets
-      summary: Update a planet
-      description: Sometimes you make mistakes, that's fine. No worries, you can update all planets.
-      operationId: updatePlanet
-      requestBody:
-        description: New information about the planet
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Planet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Planet'
-      parameters:
-        - $ref: '#/components/parameters/planetId'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Planet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Planet'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Planets
-      summary: Delete a planet
-      operationId: deletePlanet
-      description:
-        This endpoint was used to delete planets. Unfortunately, that caused
-        a lot of trouble for planets with life. So, this endpoint is now deprecated
-        and should not be used anymore.
-      x-scalar-stability: experimental
-      parameters:
-        - $ref: '#/components/parameters/planetId'
-      responses:
-        '204':
-          description: No Content
-        '404':
-          $ref: '#/components/responses/NotFound'
-  '/planets/{planetId}/image':
-    post:
-      tags:
-        - Planets
-      summary: Upload an image to a planet
-      description: Got a crazy good photo of a planet? Share it with the world!
-      operationId: uploadImage
-      parameters:
-        - $ref: '#/components/parameters/planetId'
-      requestBody:
-        description: Image to upload
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                image:
-                  type: string
-                  format: binary
-                  description: The image file to upload
-                  examples:
-                    - '@mars.jpg'
-                    - '@jupiter.png'
-      responses:
-        '200':
-          $ref: '#/components/responses/ImageUploaded'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  '/celestial-bodies':
-    post:
-      tags:
-        - Celestial Bodies
-      summary: Create a celestial body
-      operationId: createCelestialBody
-      requestBody:
-        description: Celestial body to create
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CelestialBody'
-      responses:
-        '201':
-          description: Celestial body created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CelestialBody'
-  '/user/signup':
-    post:
-      tags:
-        - Authentication
-      summary: Create a user
-      description: Time to create a user account, eh?
-      operationId: createUser
-      security:
-        - {}
-      requestBody:
-        description: User to create
-        content:
-          application/json:
-            schema:
-              allOf:
-                - $ref: '#/components/schemas/User'
-                - $ref: '#/components/schemas/Credentials'
+              $ref: '#/components/schemas/TextToImageRequest'
             examples:
-              Marc:
+              basic:
+                summary: 基础示例
                 value:
-                  name: Marc
-                  email: marc@scalar.com
-                  password: i-love-scalar
-              Cam:
+                  model: "FLUX_PRO"
+                  prompt: "A beautiful sunset over the ocean"
+                  aspect_ratio: "16:9"
+              advanced:
+                summary: 高级示例
                 value:
-                  name: Cam
-                  email: cam@scalar.com
-                  password: scalar-is-cool
-          application/xml:
-            schema:
-              allOf:
-                - $ref: '#/components/schemas/User'
-                - $ref: '#/components/schemas/Credentials'
-            examples:
-              Marc:
-                value:
-                  name: Marc
-                  email: marc@scalar.com
-                  password: i-love-scalar
-              Cam:
-                value:
-                  name: Cam
-                  email: cam@scalar.com
-                  password: scalar-is-cool
+                  model: "FLUX_PRO"
+                  prompt: "A beautiful sunset over the ocean, golden hour, dramatic clouds"
+                  negative_prompt: "blurry, low quality, distorted"
+                  image_number: 2
+                  aspect_ratio: "16:9"
+                  resolution: "1080p"
+                  use_web_search: false
+                  webhook_url: "https://your-server.com/webhook"
       responses:
-        '201':
-          description: Created
-          headers:
-            X-Request-ID:
-              $ref: '#/components/headers/X-Request-ID'
-            Location:
-              $ref: '#/components/headers/Location'
-            X-Processing-Time:
-              $ref: '#/components/headers/X-Processing-Time'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-  '/auth/token':
-    post:
-      tags:
-        - Authentication
-      summary: Get a token
-      description: Yeah, this is the boring security stuff. Just get your super secret token and move on.
-      operationId: getToken
-      security:
-        - {}
-      requestBody:
-        description: Credentials to authenticate a user
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Credentials'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Credentials'
-      responses:
-        '201':
-          description: Token Created
+        '200':
+          description: 任务提交成功
           headers:
             X-Request-ID:
               $ref: '#/components/headers/X-Request-ID'
@@ -449,303 +123,483 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Token'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/SubmitTaskResponse'
+              example:
+                status: 0
+                desc: "success"
+                message: "success"
+                data:
+                  batch_id: 123456789
+                  task_ids:
+                    - "task_abc123"
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-  '/me':
-    get:
+
+  '/v1/generation/image-to-image':
+    post:
       tags:
-        - Authentication
-      summary: Get authenticated user
-      description: Find yourself they say. That's what you can do here.
-      operationId: getMe
-      security:
-        - basicAuth: []
-        - oAuth2:
-            - read:account
-        - bearerAuth: []
-        - apiKeyHeader: []
-        - apiKeyQuery: []
+        - Image Generation
+      summary: 提交图生图任务
+      description: 根据参考图片和文本提示词生成新图片，可用于风格转换、图片编辑等场景。
+      operationId: submitImageToImage
+      requestBody:
+        description: 图生图任务参数
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageToImageRequest'
+            examples:
+              styleTransfer:
+                summary: 风格转换
+                value:
+                  model: "FLUX_KONTEXT"
+                  prompt: "Transform this image into anime style"
+                  images:
+                    - "https://example.com/reference.jpg"
+                  aspect_ratio: "1:1"
+              imageEdit:
+                summary: 图片编辑
+                value:
+                  model: "FLUX_KONTEXT"
+                  prompt: "Add a sunset background to this portrait"
+                  images:
+                    - "https://example.com/portrait.jpg"
+                  negative_prompt: "blurry, distorted"
+                  image_number: 1
+                  aspect_ratio: "1:1"
+                  use_web_search: false
       responses:
         '200':
-          description: OK
+          description: 任务提交成功
           headers:
             X-Request-ID:
               $ref: '#/components/headers/X-Request-ID'
-            ETag:
-              $ref: '#/components/headers/ETag'
-            Last-Modified:
-              $ref: '#/components/headers/Last-Modified'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  '/v1/generation/text-to-video':
+    post:
+      tags:
+        - Video Generation
+      summary: 提交文生视频任务
+      description: 根据文本提示词生成视频，支持设置视频时长、宽高比等参数。
+      operationId: submitTextToVideo
+      requestBody:
+        description: 文生视频任务参数
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextToVideoRequest'
+            examples:
+              basic:
+                summary: 基础示例
+                value:
+                  model: "KLING_1_6"
+                  prompt: "A cat walking in a garden"
+                  aspect_ratio: "16:9"
+                  duration: 5
+              withAudio:
+                summary: 带音频生成
+                value:
+                  model: "KLING_1_6"
+                  prompt: "Ocean waves crashing on the beach at sunset"
+                  negative_prompt: "low quality, blurry"
+                  aspect_ratio: "16:9"
+                  duration: 5
+                  generate_audio: true
+      responses:
+        '200':
+          description: 任务提交成功
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/X-Request-ID'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  '/v1/generation/image-to-video':
+    post:
+      tags:
+        - Video Generation
+      summary: 提交图生视频任务
+      description: 根据参考图片和文本提示词生成视频，可实现图片动态化效果。
+      operationId: submitImageToVideo
+      requestBody:
+        description: 图生视频任务参数
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageToVideoRequest'
+            examples:
+              animate:
+                summary: 图片动态化
+                value:
+                  model: "KLING_1_6"
+                  prompt: "Make the person wave their hand and smile"
+                  image: "https://example.com/portrait.jpg"
+                  aspect_ratio: "16:9"
+                  duration: 5
+              scenery:
+                summary: 风景动态化
+                value:
+                  model: "KLING_1_6"
+                  prompt: "Add flowing water and moving clouds"
+                  image: "https://example.com/landscape.jpg"
+                  negative_prompt: "static, frozen"
+                  aspect_ratio: "16:9"
+                  duration: 5
+                  generate_audio: true
+      responses:
+        '200':
+          description: 任务提交成功
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/X-Request-ID'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  '/v1/generation/multi-image-to-video':
+    post:
+      tags:
+        - Video Generation
+      summary: 提交多图生视频任务
+      description: 根据多张参考图片和文本提示词生成视频，可实现图片之间的平滑过渡效果。
+      operationId: submitMultiImageToVideo
+      requestBody:
+        description: 多图生视频任务参数
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiImageToVideoRequest'
+            examples:
+              transition:
+                summary: 图片过渡
+                value:
+                  model: "KLING_1_6"
+                  prompt: "Create a smooth transition between these images"
+                  images:
+                    - "https://example.com/image1.jpg"
+                    - "https://example.com/image2.jpg"
+                  aspect_ratio: "16:9"
+                  duration: 5
+              story:
+                summary: 故事叙述
+                value:
+                  model: "KLING_1_6"
+                  prompt: "Tell a story transitioning through these scenes"
+                  images:
+                    - "https://example.com/scene1.jpg"
+                    - "https://example.com/scene2.jpg"
+                    - "https://example.com/scene3.jpg"
+                  negative_prompt: "abrupt cuts, jarring transitions"
+                  aspect_ratio: "16:9"
+                  duration: 5
+                  generate_audio: true
+      responses:
+        '200':
+          description: 任务提交成功
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/X-Request-ID'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  '/v1/generation/{taskId}/status':
+    get:
+      tags:
+        - Task Query
+      summary: 查询任务详情
+      description: 根据任务ID查询任务的详细信息，包括任务状态、执行结果等。建议轮询间隔不小于 3 秒。
+      operationId: getTaskDetail
+      parameters:
+        - $ref: '#/components/parameters/taskId'
+      responses:
+        '200':
+          description: 查询成功
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/X-Request-ID'
             X-Cache-Control:
               $ref: '#/components/headers/X-Cache-Control'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/TaskDetailResponse'
+              examples:
+                pending:
+                  summary: 等待处理
+                  value:
+                    status: 0
+                    desc: "success"
+                    message: "success"
+                    data:
+                      task_id: "task_abc123"
+                      task_status: "PENDING"
+                processing:
+                  summary: 处理中
+                  value:
+                    status: 0
+                    desc: "success"
+                    message: "success"
+                    data:
+                      task_id: "task_abc123"
+                      task_status: "PROCESSING"
+                successImage:
+                  summary: 图片生成成功
+                  value:
+                    status: 0
+                    desc: "success"
+                    message: "success"
+                    data:
+                      task_id: "task_abc123"
+                      task_status: "SUCCESS"
+                      images:
+                        - "https://cdn.weryai.com/result/image1.png"
+                successVideo:
+                  summary: 视频生成成功
+                  value:
+                    status: 0
+                    desc: "success"
+                    message: "success"
+                    data:
+                      task_id: "task_abc123"
+                      task_status: "SUCCESS"
+                      videos:
+                        - "https://cdn.weryai.com/result/video1.mp4"
+                failed:
+                  summary: 任务失败
+                  value:
+                    status: 0
+                    desc: "success"
+                    message: "success"
+                    data:
+                      task_id: "task_abc123"
+                      task_status: "FAILED"
+                      msg: "Content moderation failed"
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-webhooks:
-  newPlanet:
-    post:
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  '/v1/generation/batch/{batchId}/status':
+    get:
       tags:
-        - Planets
-      requestBody:
-        description: Information about a new planet
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Planet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Planet'
+        - Task Query
+      summary: 查询批量任务状态
+      description: 根据批次ID查询该批次下所有任务的详细信息，包括任务状态、执行结果等。
+      operationId: getBatchTasksStatus
+      parameters:
+        - $ref: '#/components/parameters/batchId'
       responses:
         '200':
-          description:
-            Return a 200 status to indicate that the data was received
-            successfully
+          description: 查询成功
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/X-Request-ID'
+            X-Cache-Control:
+              $ref: '#/components/headers/X-Cache-Control'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTasksResponse'
+              example:
+                status: 0
+                desc: "success"
+                message: "success"
+                data:
+                  - task_id: "task_abc123"
+                    task_status: "SUCCESS"
+                    images:
+                      - "https://cdn.weryai.com/result/image1.png"
+                  - task_id: "task_abc124"
+                    task_status: "PROCESSING"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      description: JWT Bearer token authentication
-    basicAuth:
-      type: http
-      scheme: basic
-      description: Basic HTTP authentication
-    apiKeyHeader:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API key request header
-    apiKeyQuery:
-      type: apiKey
-      in: query
-      name: api_key
-      description: API key query parameter
-    apiKeyCookie:
-      type: apiKey
-      in: cookie
-      name: api_key
-      description: API key browser cookie
-    oAuth2:
-      type: oauth2
-      description: OAuth 2.0 authentication
-      flows:
-        authorizationCode:
-          authorizationUrl: https://galaxy.scalar.com/oauth/authorize
-          tokenUrl: https://galaxy.scalar.com/oauth/token
-          scopes:
-            read:account: read your account information
-            write:planets: modify planets in your account
-            read:planets: read your planets
-        clientCredentials:
-          tokenUrl: https://galaxy.scalar.com/oauth/token
-          scopes:
-            read:account: read your account information
-            write:planets: modify planets in your account
-            read:planets: read your planets
-        # Legacy
-        implicit:
-          authorizationUrl: https://galaxy.scalar.com/oauth/authorize
-          scopes:
-            read:account: read your account information
-            write:planets: modify planets in your account
-            read:planets: read your planets
-        # Legacy
-        password:
-          tokenUrl: https://galaxy.scalar.com/oauth/token
-          scopes:
-            read:account: read your account information
-            write:planets: modify planets in your account
-            read:planets: read your planets
-    openIdConnect:
-      type: openIdConnect
-      openIdConnectUrl: https://galaxy.scalar.com/.well-known/openid-configuration
-      description: OpenID Connect Authentication
+      bearerFormat: API Key
+      description: |
+        使用 API Key 进行认证。在 [WeryAI 控制台](https://weryai.com/settings/api-keys) 获取您的 API Key。
+
+        示例：`Authorization: Bearer sk-xxxxxxxxxxxxxxxx`
+
   parameters:
-    planetId:
-      name: planetId
-      description: The ID of the planet to get
+    taskId:
+      name: taskId
+      description: 任务ID，提交任务时返回
+      in: path
+      required: true
+      schema:
+        type: string
+        examples:
+          - task_abc123
+    batchId:
+      name: batchId
+      description: 批次ID，提交任务时返回
       in: path
       required: true
       schema:
         type: integer
         format: int64
         examples:
-          - 1
-    limit:
-      name: limit
-      description: The number of items to return
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        default: 10
-    offset:
-      name: offset
-      description:
-        The number of items to skip before starting to collect the result
-        set
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        default: 0
+          - 123456789
+
   headers:
-    X-RateLimit-Limit:
-      description: The number of allowed requests in the current period
-      schema:
-        type: integer
-        example: 100
-    X-RateLimit-Remaining:
-      description: The number of remaining requests in the current period
-      schema:
-        type: integer
-        example: 95
-    X-RateLimit-Reset:
-      description: The number of seconds left in the current period
-      schema:
-        type: integer
-        example: 3600
     X-Request-ID:
-      description: Unique identifier for the request
+      description: 请求唯一标识符，用于问题追踪
       schema:
         type: string
         format: uuid
         example: '123e4567-e89b-12d3-a456-426614174000'
-    X-Pagination-Total:
-      description: Total number of items available
+    X-RateLimit-Limit:
+      description: 当前时间窗口内允许的最大请求数
       schema:
         type: integer
-        example: 1000
-    X-Pagination-Page:
-      description: Current page number
+        example: 100
+    X-RateLimit-Remaining:
+      description: 当前时间窗口内剩余的请求数
       schema:
         type: integer
-        example: 1
-    X-Pagination-Per-Page:
-      description: Number of items per page
+        example: 95
+    X-RateLimit-Reset:
+      description: 速率限制重置的时间（Unix 时间戳）
       schema:
         type: integer
-        example: 10
+        example: 1640995200
     X-Cache-Control:
-      description: Cache control directives
+      description: 缓存控制指令
       schema:
         type: string
-        example: 'max-age=3600, public'
-    ETag:
-      description: Entity tag for caching
-      schema:
-        type: string
-        example: '"33a64df551"'
-    Last-Modified:
-      description: The last modification date of the resource
-      schema:
-        type: string
-        format: date-time
-        example: '2023-12-01T12:00:00Z'
-    Location:
-      description: The URL of the newly created resource
-      schema:
-        type: string
-        format: uri
-        example: 'https://galaxy.scalar.com/planets/123'
-    X-Processing-Time:
-      description: The time taken to process the request in milliseconds
+        example: 'no-cache'
+    Retry-After:
+      description: 重试等待时间（秒）
       schema:
         type: integer
-        example: 150
+        example: 60
+
   responses:
-    ImageUploaded:
-      description: Image uploaded
-      headers:
-        X-Request-ID:
-          $ref: '#/components/headers/X-Request-ID'
-        X-Cache-Control:
-          $ref: '#/components/headers/X-Cache-Control'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ImageUploadedMessage'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/ImageUploadedMessage'
     BadRequest:
-      description: Bad Request
+      description: 参数错误
       headers:
         X-Request-ID:
           $ref: '#/components/headers/X-Request-ID'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    NotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidParam:
+              summary: 参数无效
+              value:
+                status: 1001
+                desc: "Parameter error"
+                message: "Prompt cannot be empty."
+            invalidModel:
+              summary: 模型不存在
+              value:
+                status: 1001
+                desc: "Parameter error"
+                message: "Model is not exist."
+
     Unauthorized:
-      description: Unauthorized
+      description: 认证失败
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    Conflict:
-      description: Conflict
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 1002
+            desc: "Unauthorized"
+            message: "Invalid API Key"
+
+    NotFound:
+      description: 资源不存在
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/X-Request-ID'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Conflict'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/Conflict'
-    UnprocessableEntity:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/UnprocessableEntity'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/UnprocessableEntity'
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 1003
+            desc: "Not found"
+            message: "Task not found"
+
     TooManyRequests:
-      description: Too Many Requests
+      description: 请求过于频繁
       headers:
         X-Request-ID:
           $ref: '#/components/headers/X-Request-ID'
@@ -756,521 +610,487 @@ components:
         X-RateLimit-Reset:
           $ref: '#/components/headers/X-RateLimit-Reset'
         Retry-After:
-          description: The number of seconds to wait before retrying
-          schema:
-            type: integer
-            example: 60
+          $ref: '#/components/headers/Retry-After'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TooManyRequestsError'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/TooManyRequestsError'
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 1004
+            desc: "Too many requests"
+            message: "Rate limit exceeded. Please try again later."
+
   schemas:
-    User:
-      description: A user
-      type: object
-      xml:
-        name: user
-      properties:
-        id:
-          type: integer
-          format: int64
-          readOnly: true
-          examples:
-            - 1
-        name:
-          type: string
-          examples:
-            - Marc
-    Credentials:
-      description: Credentials to authenticate a user
+    TextToImageRequest:
+      description: 文生图任务请求参数
       type: object
       required:
-        - email
-        - password
+        - model
+        - prompt
+        - aspect_ratio
       properties:
-        email:
+        model:
           type: string
-          format: email
+          description: 模型名称
           examples:
-            - marc@scalar.com
-        password:
+            - FLUX_PRO
+            - FLUX_SCHNELL
+        prompt:
           type: string
-          writeOnly: true
+          description: 正向文本提示词，描述期望生成的图片内容
+          minLength: 1
+          maxLength: 2000
           examples:
-            - i-love-scalar
-            - i-love-OSS
-            - i-love-code
-    Token:
-      description: A token to authenticate a user
-      type: object
-      properties:
-        token:
+            - A beautiful sunset over the ocean
+            - A futuristic city with flying cars
+        negative_prompt:
           type: string
+          description: 负向文本提示词，描述不希望出现在图片中的元素
+          maxLength: 1000
           examples:
-            - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-    CelestialBody:
-      oneOf:
-        - $ref: '#/components/schemas/Planet'
-        - $ref: '#/components/schemas/Satellite'
-      discriminator:
-        propertyName: type
-        mapping:
-          planet: '#/components/schemas/Planet'
-          satellite: '#/components/schemas/Satellite'
-      description: A celestial body which can be either a planet or a satellite
-    Planet:
-      description: A planet in the Scalar Galaxy
-      type: object
-      required:
-        - id
-        - name
-      additionalProperties: false
-      xml:
-        name: planet
-      properties:
-        id:
+            - blurry, low quality
+            - distorted, ugly
+        image_number:
           type: integer
-          format: int64
-          readOnly: true
+          description: 生成图片数量
+          default: 1
+          minimum: 1
+          maximum: 4
           examples:
             - 1
-          x-variable: planetId
-        name:
+            - 2
+        aspect_ratio:
           type: string
+          description: 图片宽高比
           examples:
-            - Mars
-            - Jupiter
-            - HD 40307g
-        description:
-          type:
-            - string
-            - 'null'
-          examples:
-            - The red planet
-            - A gas giant with a great red spot
-        type:
+            - '16:9'
+            - '1:1'
+            - '9:16'
+        resolution:
           type: string
-          enum:
-            - terrestrial
-            - gas_giant
-            - ice_giant
-            - dwarf
-            - super_earth
-          x-enum-varnames:
-            - Terrestrial
-            - GasGiant
-            - IceGiant
-            - Dwarf
-            - SuperEarth
-          x-enum-descriptions:
-            terrestrial: Rocky planets with solid surfaces, like Earth and Mars
-            gas_giant: Large planets composed mainly of hydrogen and helium, like Jupiter and Saturn
-            ice_giant: Planets composed of water, ammonia, and methane ices, like Uranus and Neptune
-            dwarf: Small planetary bodies that don't meet full planet criteria, like Pluto
-            super_earth: Rocky planets larger than Earth but smaller than gas giants
+          description: 图片分辨率
           examples:
-            - terrestrial
-        habitabilityIndex:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: A score from 0 to 1 indicating potential habitability
-          examples:
-            - 0.68
-        physicalProperties:
-          type: object
-          additionalProperties:
-            x-additionalPropertiesName: measurement
-            type: number
-            format: float
-            description: Additional physical measurements for the planet
-          properties:
-            mass:
-              type: number
-              format: float
-              exclusiveMinimum: 0
-              description: Mass in Earth masses (must be greater than 0)
-              examples:
-                - 0.107
-            radius:
-              type: number
-              format: float
-              exclusiveMinimum: 0
-              description: Radius in Earth radii (must be greater than 0)
-              examples:
-                - 0.532
-            gravity:
-              type: number
-              format: float
-              description: Surface gravity in Earth g
-              examples:
-                - 0.378
-            temperature:
-              type: object
-              additionalProperties:
-                x-additionalPropertiesName: temperatureMetric
-                type: number
-                format: float
-                description: Additional temperature-related measurements in Kelvin
-              properties:
-                min:
-                  type: number
-                  format: float
-                  description: Minimum temperature in Kelvin
-                  examples:
-                    - 130
-                max:
-                  type: number
-                  format: float
-                  description: Maximum temperature in Kelvin
-                  examples:
-                    - 308
-                average:
-                  type: number
-                  format: float
-                  description: Average temperature in Kelvin
-                  examples:
-                    - 210
-        atmosphere:
-          type: array
-          description: Atmospheric composition
-          items:
-            type: object
-            additionalProperties:
-              x-additionalPropertiesName: atmosphericData
-              type: string
-              description: Additional atmospheric composition data
-            properties:
-              compound:
-                type: string
-                examples:
-                  - CO2
-                  - N2
-              percentage:
-                type: number
-                format: float
-                exclusiveMaximum: 100
-                examples:
-                  - 95.3
-        discoveredAt:
+            - '1080p'
+            - '720p'
+        use_web_search:
+          type: boolean
+          description: 是否使用网络搜索增强提示词
+          default: false
+        webhook_url:
           type: string
-          format: date-time
+          format: uri
+          description: 回调地址，任务完成后会向该地址发送 POST 请求
           examples:
-            - '1610-01-07T00:00:00Z'
-        image:
+            - https://your-server.com/webhook
+        caller_id:
+          type: integer
+          format: int64
+          description: 调用人ID（用于业务关联）
+
+    ImageToImageRequest:
+      description: 图生图任务请求参数
+      type: object
+      required:
+        - model
+        - prompt
+        - images
+        - aspect_ratio
+      properties:
+        model:
           type: string
-          nullable: true
+          description: 模型名称
           examples:
-            - https://cdn.scalar.com/photos/mars.jpg
-        satellites:
-          type: array
-          items:
-            $ref: '#/components/schemas/Satellite'
-        creator:
-          $ref: '#/components/schemas/User'
-        tags:
+            - FLUX_KONTEXT
+        prompt:
+          type: string
+          description: 正向文本提示词
+          minLength: 1
+          maxLength: 2000
+          examples:
+            - Transform this image into anime style
+        images:
           type: array
           items:
             type: string
+            format: uri
+          description: 参考图片列表（支持 jpg、jpeg、png、webp）
           examples:
-            - ['solar-system', 'rocky', 'explored']
-        lastUpdated:
+            - - https://example.com/reference.jpg
+        negative_prompt:
           type: string
-          format: date-time
-          readOnly: true
+          description: 负向文本提示词
+          maxLength: 1000
+        image_number:
+          type: integer
+          description: 生成图片数量
+          default: 1
+          minimum: 1
+          maximum: 4
+        aspect_ratio:
+          type: string
+          description: 图片宽高比
           examples:
-            - '2024-01-15T14:30:00Z'
-        successCallbackUrl:
+            - '1:1'
+        resolution:
+          type: string
+          description: 图片分辨率
+        use_web_search:
+          type: boolean
+          description: 是否使用网络搜索增强提示词
+          default: false
+        webhook_url:
           type: string
           format: uri
-          description: URL which gets invoked upon a successful operation
-          examples:
-            - https://example.com/webhook
-        failureCallbackUrl:
-          type: string
-          format: uri
-          description: URL which gets invoked upon a failed operation
-          examples:
-            - https://example.com/webhook
-    Satellite:
-      description: Every satellite in the Scalar Galaxy
+          description: 回调地址
+        caller_id:
+          type: integer
+          format: int64
+          description: 调用人ID
+
+    TextToVideoRequest:
+      description: 文生视频任务请求参数
       type: object
       required:
-        - name
+        - model
+        - prompt
+        - aspect_ratio
+        - duration
       properties:
-        id:
+        model:
+          type: string
+          description: 模型名称
+          examples:
+            - KLING_1_6
+        prompt:
+          type: string
+          description: 正向文本提示词
+          minLength: 1
+          maxLength: 2000
+          examples:
+            - A cat walking in a garden
+        negative_prompt:
+          type: string
+          description: 负向文本提示词
+          maxLength: 1000
+        video_number:
+          type: integer
+          description: 生成视频数量（当前仅支持1）
+          default: 1
+          maximum: 1
+        aspect_ratio:
+          type: string
+          description: 视频宽高比
+          examples:
+            - '16:9'
+            - '1:1'
+            - '9:16'
+        resolution:
+          type: string
+          description: 视频分辨率
+        duration:
+          type: integer
+          description: 视频时长（秒）
+          minimum: 1
+          maximum: 10
+          examples:
+            - 5
+        generate_audio:
+          type: boolean
+          description: 是否生成音频
+          default: false
+        webhook_url:
+          type: string
+          format: uri
+          description: 回调地址
+        caller_id:
           type: integer
           format: int64
-          readOnly: true
-          examples:
-            - 1
-        name:
+          description: 调用人ID
+
+    ImageToVideoRequest:
+      description: 图生视频任务请求参数
+      type: object
+      required:
+        - model
+        - prompt
+        - image
+        - aspect_ratio
+        - duration
+      properties:
+        model:
           type: string
+          description: 模型名称
           examples:
-            - Phobos
-        description:
-          type:
-            - string
-            - 'null'
-          examples:
-            - Phobos is the larger and innermost of the two moons of Mars.
-        diameter:
-          type: number
-          format: float
-          description: Diameter in kilometers
-          examples:
-            - 22.2
-        type:
+            - KLING_1_6
+        prompt:
           type: string
-          enum:
-            - moon
-            - asteroid
-            - comet
-          x-enum-varnames:
-            - Moon
-            - Asteroid
-            - Comet
-          x-enum-descriptions:
-            moon: Natural satellites that orbit planets
-            asteroid: Rocky objects that orbit the sun, typically found in the asteroid belt
-            comet: Icy bodies that release gas when approaching the sun, creating visible tails
+          description: 正向文本提示词
+          minLength: 1
+          maxLength: 2000
           examples:
-            - moon
-        orbit:
-          type: object
-          properties:
-            planetId:
-              type: integer
-              format: int64
-              description: The ID of the planet this satellite orbits
-              examples:
-                - 1
-            orbitalPeriod:
-              type: number
-              format: float
-              description: Orbital period in Earth days
-              examples:
-                - 0.319
-            distance:
-              type: number
-              format: float
-              description: Average distance from the planet in kilometers
-              examples:
-                - 9376
-    PaginatedResource:
-      description: A paginated resource
+            - Make the person wave their hand
+        image:
+          type: string
+          format: uri
+          description: 参考图片（支持 jpg、jpeg、png、webp）
+          examples:
+            - https://example.com/reference.jpg
+        negative_prompt:
+          type: string
+          description: 负向文本提示词
+          maxLength: 1000
+        video_number:
+          type: integer
+          description: 生成视频数量（当前仅支持1）
+          default: 1
+          maximum: 1
+        aspect_ratio:
+          type: string
+          description: 视频宽高比
+          examples:
+            - '16:9'
+        resolution:
+          type: string
+          description: 视频分辨率
+        duration:
+          type: integer
+          description: 视频时长（秒）
+          minimum: 1
+          maximum: 10
+          examples:
+            - 5
+        generate_audio:
+          type: boolean
+          description: 是否生成音频
+          default: false
+        webhook_url:
+          type: string
+          format: uri
+          description: 回调地址
+        caller_id:
+          type: integer
+          format: int64
+          description: 调用人ID
+
+    MultiImageToVideoRequest:
+      description: 多图生视频任务请求参数
+      type: object
+      required:
+        - model
+        - prompt
+        - images
+        - aspect_ratio
+        - duration
+      properties:
+        model:
+          type: string
+          description: 模型名称
+          examples:
+            - KLING_1_6
+        prompt:
+          type: string
+          description: 正向文本提示词
+          minLength: 1
+          maxLength: 2000
+          examples:
+            - Create a smooth transition between these images
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 参考图片列表（最多3张，支持 jpg、jpeg、png、webp）
+          minItems: 2
+          maxItems: 3
+          examples:
+            - - https://example.com/image1.jpg
+              - https://example.com/image2.jpg
+        negative_prompt:
+          type: string
+          description: 负向文本提示词
+          maxLength: 1000
+        video_number:
+          type: integer
+          description: 生成视频数量（当前仅支持1）
+          default: 1
+          maximum: 1
+        aspect_ratio:
+          type: string
+          description: 视频宽高比
+          examples:
+            - '16:9'
+        resolution:
+          type: string
+          description: 视频分辨率
+        duration:
+          type: integer
+          description: 视频时长（秒）
+          minimum: 1
+          maximum: 10
+          examples:
+            - 5
+        generate_audio:
+          type: boolean
+          description: 是否生成音频
+          default: false
+        webhook_url:
+          type: string
+          format: uri
+          description: 回调地址
+        caller_id:
+          type: integer
+          format: int64
+          description: 调用人ID
+
+    SubmitTaskResponse:
+      description: 提交任务响应
       type: object
       properties:
-        meta:
-          type: object
-          properties:
-            limit:
-              type: integer
-              format: int64
-              examples:
-                - 10
-            offset:
-              type: integer
-              format: int64
-              examples:
-                - 0
-            total:
-              type: integer
-              format: int64
-              examples:
-                - 100
-            next:
-              type:
-                - string
-                - 'null'
-              examples:
-                - '/planets?limit=10&offset=10'
-    ImageUploadedMessage:
-      x-scalar-ignore: true
-      description: Message about an image upload
-      type: object
-      properties:
+        status:
+          type: integer
+          description: 业务状态码（0表示成功）
+          examples:
+            - 0
+        desc:
+          type: string
+          description: 状态描述
+          examples:
+            - success
         message:
           type: string
+          description: 多语言提示文案
           examples:
-            - Image uploaded successfully
-        imageUrl:
-          type: string
-          description: The URL where the uploaded image can be accessed
-          examples:
-            - https://cdn.scalar.com/images/8f47c132-9d1f-4f83-b5a4-91db5ee757ab.jpg
-        uploadedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the image was uploaded
-          examples:
-            - '2024-01-15T14:30:00Z'
-        fileSize:
-          type: integer
-          description: Size of the uploaded image in bytes
-          examples:
-            - 1048576
-        mimeType:
-          type: string
-          description: The content type of the uploaded image
-          examples:
-            - image/jpeg
-            - image/png
-    BadRequestError:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
+            - success
+        data:
+          $ref: '#/components/schemas/SubmitTaskResult'
+
+    TaskDetailResponse:
+      description: 任务详情响应
       type: object
       properties:
-        type:
-          type: string
-          examples:
-            - https://example.com/errors/bad-request
-        title:
-          type: string
-          examples:
-            - Bad Request
         status:
           type: integer
-          format: int64
+          description: 业务状态码
           examples:
-            - 400
-        detail:
+            - 0
+        desc:
           type: string
+          description: 状态描述
           examples:
-            - The request was invalid.
-    ForbiddenError:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
+            - success
+        message:
+          type: string
+          description: 多语言提示文案
+          examples:
+            - success
+        data:
+          $ref: '#/components/schemas/TaskResult'
+
+    BatchTasksResponse:
+      description: 批量任务响应
       type: object
       properties:
-        type:
-          type: string
-          examples:
-            - https://example.com/errors/forbidden
-        title:
-          type: string
-          examples:
-            - Forbidden
         status:
           type: integer
-          format: int64
+          description: 业务状态码
           examples:
-            - 403
-        detail:
+            - 0
+        desc:
           type: string
+          description: 状态描述
           examples:
-            - You are not authorized to access this resource.
-    NotFoundError:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
+            - success
+        message:
+          type: string
+          description: 多语言提示文案
+          examples:
+            - success
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskResult'
+
+    SubmitTaskResult:
+      description: 提交任务结果
       type: object
       properties:
-        type:
-          type: string
-          examples:
-            - https://example.com/errors/not-found
-        title:
-          type: string
-          examples:
-            - Not Found
-        status:
+        batch_id:
           type: integer
           format: int64
+          description: 批次ID，用于批量查询任务状态
           examples:
-            - 404
-        detail:
-          type: string
+            - 123456789
+        task_ids:
+          type: array
+          items:
+            type: string
+          description: 任务ID列表
           examples:
-            - The resource you are trying to access does not exist.
-    UnauthorizedError:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
+            - - task_abc123
+
+    TaskResult:
+      description: 任务执行结果
       type: object
       properties:
-        type:
+        task_id:
           type: string
+          description: 任务ID
           examples:
-            - https://example.com/errors/not-found
-        title:
+            - task_abc123
+        task_status:
           type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - SUCCESS
+            - FAILED
+          description: |
+            任务状态：
+            - `PENDING` - 等待处理
+            - `PROCESSING` - 处理中
+            - `SUCCESS` - 成功
+            - `FAILED` - 失败
           examples:
-            - Unauthorized
-        status:
-          type: integer
-          format: int64
-          examples:
-            - 401
-        detail:
+            - SUCCESS
+        msg:
           type: string
+          description: 错误信息（任务失败时返回）
           examples:
-            - You are not authorized to access this resource.
-    Conflict:
+            - Content moderation failed
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 图片结果列表（图片生成任务成功时返回）
+          examples:
+            - - https://cdn.weryai.com/result/image1.png
+        videos:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 视频结果列表（视频生成任务成功时返回）
+          examples:
+            - - https://cdn.weryai.com/result/video1.mp4
+
+    ErrorResponse:
       x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
+      description: 错误响应
       type: object
       properties:
-        type:
-          type: string
-          examples:
-            - https://example.com/errors/conflict
-        title:
-          type: string
-          examples:
-            - Conflict
         status:
           type: integer
-          format: int64
+          description: 业务状态码
           examples:
-            - 409
-        detail:
+            - 1001
+        desc:
           type: string
+          description: 错误描述
           examples:
-            - The resource you are trying to access is in conflict.
-    UnprocessableEntity:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
-      type: object
-      properties:
-        type:
+            - Parameter error
+        message:
           type: string
+          description: 错误详情
           examples:
-            - https://example.com/errors/unprocessable-entity
-        title:
-          type: string
-          examples:
-            - Unprocessable Entity
-        status:
-          type: integer
-          format: int64
-          examples:
-            - 422
-        detail:
-          type: string
-          examples:
-            - The request was invalid.
-    TooManyRequestsError:
-      x-scalar-ignore: true
-      description: RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)
-      type: object
-      properties:
-        type:
-          type: string
-          examples:
-            - https://example.com/errors/too-many-requests
-        title:
-          type: string
-          examples:
-            - Too Many Requests
-        status:
-          type: integer
-          format: int64
-          examples:
-            - 429
-        detail:
-          type: string
-          examples:
-            - Rate limit exceeded. Please try again later.
+            - Prompt cannot be empty.
